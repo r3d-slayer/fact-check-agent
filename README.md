@@ -123,23 +123,6 @@ The UI uses a system-monitor inspired design language featuring:
 
 ---
 
-# Screenshots
-
-Add your screenshots in this section.
-
-## Dashboard
-
-```md
-![Dashboard](./screenshots/Dashboard.png)
-```
-
-## Verification Results
-
-```md
-![Results](./screenshots/fact-check-result.jpeg)
-```
----
-
 # Technology Stack
 
 ## Frontend
