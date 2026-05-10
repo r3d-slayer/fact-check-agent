@@ -323,7 +323,7 @@ export default function App() {
                 </p>
 
                 <label className="border-2 border-black px-6 py-3 bg-black text-white hover:bg-white hover:text-black transition-colors font-mono text-xs font-bold cursor-pointer uppercase tracking-widest">
-                  LOAD_SOURCE.EXE
+                  UPLOAD_PDF
 
                   <input
                     type="file"
