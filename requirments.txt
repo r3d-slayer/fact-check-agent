@@ -1,0 +1,98 @@
+# Requirements
+
+## Frontend Dependencies
+
+- react
+- react-dom
+- motion
+- lucide-react
+
+---
+
+# PDF Processing
+
+- pdfjs-dist
+
+---
+
+# AI SDK
+
+- @google/genai
+
+---
+
+# Build Tools
+
+- vite
+- typescript
+
+---
+
+# React Type Definitions
+
+- @types/react
+- @types/react-dom
+
+---
+
+# Styling
+
+- tailwindcss
+- postcss
+- autoprefixer
+
+---
+
+# Development Utilities
+
+- eslint
+- @typescript-eslint/eslint-plugin
+- @typescript-eslint/parser
+
+---
+
+# Recommended Node.js Version
+
+```txt
+Node.js >= 18
+```
+
+---
+
+# Recommended Package Manager
+
+```txt
+npm
+```
+
+---
+
+# Installation Command
+
+```bash
+npm install
+```
+
+---
+
+# Run Development Server
+
+```bash
+npm run dev
+```
+
+---
+
+# Production Build
+
+```bash
+npm run build
+```
+
+---
+
+# Preview Production Build
+
+```bash
+npm run preview
+```
