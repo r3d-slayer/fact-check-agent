@@ -24,6 +24,38 @@ function cleanJSON(text: string) {
     .trim();
 }
 
+// SAFE JSON PARSER
+
+function safeParseJSON(
+  text: string
+) {
+  try {
+    const cleaned = text
+      .replace(
+        /[\u0000-\u001F]+/g,
+        " "
+      )
+      .replace(/\n/g, " ")
+      .replace(/\r/g, " ")
+      .replace(/\t/g, " ")
+      .trim();
+
+    return JSON.parse(cleaned);
+  } catch (error) {
+    console.error(
+      "Safe JSON parse failed:",
+      error
+    );
+
+    console.log(
+      "BROKEN JSON:",
+      text
+    );
+
+    return null;
+  }
+}
+
 function chunkText(
   text: string,
   chunkSize = 15000
@@ -134,9 +166,12 @@ ${chunk}
         cleanJSON(raw);
 
       const parsed =
-        JSON.parse(cleaned);
+        safeParseJSON(cleaned);
 
-      if (Array.isArray(parsed)) {
+      if (
+        parsed &&
+        Array.isArray(parsed)
+      ) {
         allClaims.push(...parsed);
       }
     }
@@ -164,10 +199,12 @@ export async function verifyClaimsBatch(
   ) => void
 ): Promise<FactCheckResult[]> {
   try {
-    // Smaller batch size = live streaming feel
+    // SMALLER BATCHES
+    // BETTER JSON STABILITY
+
     const batches = chunkArray(
       claims,
-      3
+      2
     );
 
     const allResults: FactCheckResult[] =
@@ -179,7 +216,7 @@ export async function verifyClaimsBatch(
           model: "gemini-2.5-flash",
 
           contents: `
-Fact check ALL these claims using live web search.
+Fact check these claims using live web search.
 
 Claims:
 ${batch
@@ -191,10 +228,10 @@ ${batch
 
 Instructions:
 - Search the live internet
-- Compare multiple sources
 - Prefer official sources
-- Use recent information
-- Carefully evaluate evidence
+- Keep explanations SHORT
+- Maximum 2 short sentences
+- Maximum 3 sources per claim
 
 Allowed statuses:
 - verified
@@ -203,15 +240,14 @@ Allowed statuses:
 - unknown
 
 IMPORTANT:
-- Maximum 5 sources per claim
-- Return ONLY valid JSON array
+Return ONLY valid JSON array.
 
 Format:
 [
   {
     "claim": "Claim text",
     "status": "verified",
-    "explanation": "Reason here",
+    "explanation": "Short reason",
     "confidence": 0.91,
     "sources": [
       {
@@ -246,13 +282,20 @@ Format:
         );
 
       if (!match) {
+        console.log(
+          "No JSON array found"
+        );
+
         continue;
       }
 
       const parsed =
-        JSON.parse(match[0]);
+        safeParseJSON(
+          match[0]
+        );
 
       if (
+        !parsed ||
         !Array.isArray(parsed)
       ) {
         continue;
@@ -266,92 +309,100 @@ Format:
         [];
 
       for (const item of parsed) {
-        const validStatuses: ClaimStatus[] =
-          [
-            "verified",
-            "false",
-            "inaccurate",
-            "unknown",
-          ];
+        try {
+          const validStatuses: ClaimStatus[] =
+            [
+              "verified",
+              "false",
+              "inaccurate",
+              "unknown",
+            ];
 
-        const status: ClaimStatus =
-          validStatuses.includes(
-            item.status
-          )
-            ? item.status
-            : "unknown";
+          const status: ClaimStatus =
+            validStatuses.includes(
+              item?.status
+            )
+              ? item.status
+              : "unknown";
 
-        const result: FactCheckResult =
-          {
-            claim:
-              typeof item.claim ===
-              "string"
-                ? item.claim
-                : "Unknown claim",
+          const result: FactCheckResult =
+            {
+              claim:
+                typeof item?.claim ===
+                "string"
+                  ? item.claim
+                  : "Unknown claim",
 
-            originalText:
-              typeof item.claim ===
-              "string"
-                ? item.claim
-                : "Unknown claim",
+              originalText:
+                typeof item?.claim ===
+                "string"
+                  ? item.claim
+                  : "Unknown claim",
 
-            status,
+              status,
 
-            explanation:
-              typeof item.explanation ===
-              "string"
-                ? item.explanation
-                : "No explanation provided.",
+              explanation:
+                typeof item?.explanation ===
+                "string"
+                  ? item.explanation
+                  : "No explanation provided.",
 
-            confidence:
-              typeof item.confidence ===
-              "number"
-                ? item.confidence
-                : 0.5,
+              confidence:
+                typeof item?.confidence ===
+                "number"
+                  ? item.confidence
+                  : 0.5,
 
-           sources: Array.isArray(
-  item.sources
-)
-  ? item.sources
-      .filter(
-        (
-          source: {
-            title?: string;
-            url?: string;
-          }
-        ) => source?.url
-      )
-      .slice(0, 5)
-      .map(
-        (
-          source: {
-            title?: string;
-            url?: string;
-          }
-        ) => ({
-          title:
-            source.title ||
-            "Unknown Source",
+              sources: Array.isArray(
+                item?.sources
+              )
+                ? item.sources
+                    .filter(
+                      (
+                        source: {
+                          title?: string;
+                          url?: string;
+                        }
+                      ) =>
+                        source?.url
+                    )
+                    .slice(0, 3)
+                    .map(
+                      (
+                        source: {
+                          title?: string;
+                          url?: string;
+                        }
+                      ) => ({
+                        title:
+                          source.title ||
+                          "Unknown Source",
 
-          url: source.url || "",
-        })
-      )
-  : [],
-          };
+                        url:
+                          source.url ||
+                          "",
+                      })
+                    )
+                : [],
+            };
 
-        // PUSH TO CURRENT BATCH
-        batchResults.push(
-          result
-        );
+          batchResults.push(
+            result
+          );
 
-        // PUSH TO FINAL ARRAY
-        allResults.push(
-          result
-        );
+          allResults.push(
+            result
+          );
+        } catch (error) {
+          console.error(
+            "Result parse failed:",
+            error
+          );
+        }
       }
 
       // ======================================
-      // STREAM RESULTS TO UI
+      // STREAM RESULTS
       // ======================================
 
       if (
