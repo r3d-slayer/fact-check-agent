@@ -1,0 +1,6 @@
+{
+  "name": "Fact-Check Agent",
+  "description": "An automated truth-layer that extracts claims from PDFs and verifies them against live web data using Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
