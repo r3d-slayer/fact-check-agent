@@ -345,4 +345,5 @@ The application can be deployed using:
 
 # Author
 
-Developed by R3D Slayer.
+Developed by Shivam Tanwar
+
